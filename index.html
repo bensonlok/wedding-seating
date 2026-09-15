@@ -42,16 +42,19 @@
 </head>
 <body>
 <h1>💍 Wedding Seating Planner</h1>
-<div class="sub">Drag a guest onto a table · on phone: tap guest then tap table</div>
+<div class="sub">Drag a guest onto a table · on phone: tap guest then tap table · edits auto-save on this device</div>
 <div class="status" id="status">Loading…</div>
 
 <div class="bar">
-  <button class="acc" onclick="saveAll()">📤 Export</button>
+  <button class="acc" onclick="publishShared()">☁ Publish shared</button>
+  <button onclick="saveAll()">📤 Export</button>
   <button onclick="importJSON()">📥 Import</button>
   <button onclick="addTable()">+ Table</button>
   <button onclick="addGuest()">+ Guest</button>
   <button onclick="reload()">↻ Refresh</button>
   <button class="sm" onclick="autoBalance()">Auto-balance</button>
+  <button class="sm" onclick="clearLocal()">Clear local</button>
+  <button class="sm" onclick="forgetToken()">Forget token</button>
 </div>
 
 <div class="totals" id="totals"></div>
@@ -65,6 +68,7 @@
 <div class="tables" id="tables"></div>
 
 <div class="hint">
+<b>Saving:</b> Every change auto-saves on this phone/PC. Refresh keeps your last update. Use <b>Publish shared</b> (one-time GitHub token) to sync phone ↔ laptop via <code>data.json</code>. Export/Import for backup.<br>
 <b>Your tables:</b> T1·T2 = 10 pax each · T3·T4 = 20 pax each · T5 = 14 pax · T6 (family) = 8 pax (Benson+Mecki+kids).<br>
 <b>Desktop:</b> drag a chip onto a table. <b>Phone:</b> tap a guest chip (turns blue), then tap the table to drop. Tap ✕ to unassign.<br>
 Couple = 2 pax · Single = 1 pax. Family table fixed 8.
@@ -74,8 +78,10 @@ Couple = 2 pax · Single = 1 pax. Family table fixed 8.
 const REPO="bensonlok/wedding-seating";
 const BRANCH="main";
 const RAW_URL=`https://raw.githubusercontent.com/${REPO}/${BRANCH}/data.json`;
+const API_FILE=`https://api.github.com/repos/${REPO}/contents/data.json`;
+const LS_PLAN="wedding-seating-plan";
+const LS_TOKEN="wedding-seating-gh-token";
 
-// default tables per your spec
 const DEF={tables:[
   {id:'T1',name:'Table 1',cap:10},
   {id:'T2',name:'Table 2',cap:10},
@@ -93,51 +99,113 @@ const DEF={tables:[
   ['Kit','Mecki','Single','T4'],['Bee yen','Mecki','Single','T4'],['Cindy','Mecki','Single','T4'],['Saynie','Mecki','Single','T4'],['Lily','Mecki','Single','T4'],['Jan','Mecki','Single','T4'],
   ['Onlai','Mecki','Single','T4'],['Even','Mecki','Single','T4'],['Orange','Mecki','Single','T4'],['Jillian','Mecki','Single','T4'],['Joey','Mecki','Single','T4'],['Sandra','Mecki','Single','T4'],
   ['Presley','Mecki','Single','T3'],['Shirene','Mecki','Single','T3'],['Candy','Mecki','Single','T3'],['Candy sister','Mecki','Single','T3'],['Singerou','Mecki','Single','T3'],['Siewching','Mecki','Single','T3'],['Yuet mei','Mecki','Single','T3'],['Swat kheng','Mecki','Single','T3']
-]};
+],updatedAt:null};
+
 function pax(t){return t==='Couple'?2:1;}
 let data=JSON.parse(JSON.stringify(DEF));
-let sel=null; // selected guest name for tap-to-move
+let sel=null;
+let saveTimer=null;
 
-async function load(){
-  setStatus('Loading shared plan…');
+function nowISO(){return new Date().toISOString();}
+function fmtLocal(iso){
+  if(!iso)return '—';
   try{
-    const r=await fetch(RAW_URL+'?t='+Date.now());
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    data=await r.json();
-    setStatus('Loaded shared plan ✓');
-    render();
-  }catch(e){setStatus('Load failed (using default): '+e.message);data=JSON.parse(JSON.stringify(DEF));render();}
+    return new Date(iso).toLocaleString('en-MY',{timeZone:'Asia/Kuala_Lumpur',dateStyle:'medium',timeStyle:'short'})+' MYT';
+  }catch(e){return iso;}
+}
+function ts(plan){
+  if(!plan||!plan.updatedAt)return 0;
+  const t=Date.parse(plan.updatedAt);
+  return Number.isFinite(t)?t:0;
 }
 function setStatus(s){document.getElementById('status').textContent=s;}
+function readLocal(){
+  try{
+    const raw=localStorage.getItem(LS_PLAN);
+    if(!raw)return null;
+    return JSON.parse(raw);
+  }catch(e){return null;}
+}
+function writeLocal(plan,quiet){
+  try{
+    localStorage.setItem(LS_PLAN,JSON.stringify(plan));
+    if(!quiet)setStatus('Saved locally · last update '+fmtLocal(plan.updatedAt));
+  }catch(e){setStatus('Local save failed: '+e.message);}
+}
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{
+    data.updatedAt=nowISO();
+    writeLocal(data);
+  },300);
+}
+function touch(){scheduleSave();}
+
+async function fetchRemote(){
+  const r=await fetch(RAW_URL+'?t='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return await r.json();
+}
+
+async function load(){
+  setStatus('Loading…');
+  let remote=null,local=readLocal();
+  try{remote=await fetchRemote();}catch(e){/* keep null */}
+  if(local&&remote){
+    if(ts(local)>=ts(remote)){
+      data=local;
+      setStatus('Loaded local plan · last update '+fmtLocal(data.updatedAt)+(ts(local)>ts(remote)?' (newer than shared)':''));
+    }else{
+      data=remote;
+      writeLocal(data,true);
+      setStatus('Loaded shared plan · last update '+fmtLocal(data.updatedAt));
+    }
+  }else if(local){
+    data=local;
+    setStatus('Loaded local plan · last update '+fmtLocal(data.updatedAt)+(remote?'' : ' · shared unreachable'));
+  }else if(remote){
+    data=remote;
+    if(!data.updatedAt)data.updatedAt=nowISO();
+    writeLocal(data,true);
+    setStatus('Loaded shared plan · last update '+fmtLocal(data.updatedAt));
+  }else{
+    data=JSON.parse(JSON.stringify(DEF));
+    data.updatedAt=nowISO();
+    writeLocal(data,true);
+    setStatus('Using defaults · last update '+fmtLocal(data.updatedAt));
+  }
+  if(!data.tables)data.tables=[];
+  if(!data.guests)data.guests=[];
+  render();
+}
+
 function tablePax(tid){return data.guests.filter(g=>g[3]===tid).reduce((s,g)=>s+pax(g[2]),0);}
 
 function render(){
   let tot=0,side={Benson:0,Mecki:0};
   data.guests.forEach(g=>{tot+=pax(g[2]);side[g[1]]=(side[g[1]]||0)+pax(g[2]);});
   document.getElementById('totals').innerHTML=`<div>Total pax: <b>${tot}</b></div><div>Benson: <b>${side.Benson||0}</b></div><div>Mecki: <b>${side.Mecki||0}</b></div><div>Tables: <b>${data.tables.length}</b></div><div>Capacity used: <b>${tot}/${data.tables.reduce((s,t)=>s+t.cap,0)}</b></div>`;
-  // pool
   const pool=data.guests.filter(g=>!g[3]||!data.tables.find(t=>t.id===g[3]));
   const pc=document.getElementById('poolChips');pc.innerHTML='';
   pool.forEach(g=>pc.appendChild(chip(g,null)));
-  // tables
   const wrap=document.getElementById('tables');wrap.innerHTML='';
   data.tables.forEach(t=>{
     const div=document.createElement('div');div.className='tbl'+(t.fam?' fam':'');
     div.ondragover=(e)=>{e.preventDefault();div.classList.add('over');};
     div.ondragleave=()=>div.classList.remove('over');
     div.ondrop=(e)=>{e.preventDefault();div.classList.remove('over');const n=e.dataTransfer.getData('text');if(n)assign(n,t.id);};
-    div.onclick=(e)=>{if(e.target===div||e.target.tagName==='H3'||e.target.classList.contains('cap')){if(sel){assign(sel,t.id);sel=null;render();}}};
+    div.onclick=(e)=>{if(e.target===div||e.target.tagName==='H3'||e.target.classList.contains('cap')){if(sel){assign(sel,t.id);sel=null;}}};
     const pp=tablePax(t.id);
     div.innerHTML=`<h3><span>${t.id} · ${t.name}</span><span class="pax${pp>t.cap?' full':''}">${pp}/${t.cap}</span></h3><div class="cap">capacity ${t.cap}</div>`;
     const gs=data.guests.filter(g=>g[3]===t.id);
     gs.forEach(g=>div.appendChild(chip(g,t.id)));
-    // add row
     const ar=document.createElement('div');ar.className='addrow';
     ar.innerHTML=`<input class="nm" id="gn_${t.id}" placeholder="add guest"><select id="gt_${t.id}"><option>Couple</option><option>Single</option></select><button class="sm" onclick="addTo('${t.id}')">+</button>`;
     div.appendChild(ar);
     wrap.appendChild(div);
   });
 }
+
 function chip(g,tid){
   const c=document.createElement('span');c.className='chip'+(sel===g[0]?' sel':'');
   c.draggable=true;
@@ -146,15 +214,32 @@ function chip(g,tid){
   c.innerHTML=`${g[0]}<span class="t">${g[1][0]}·${g[2][0]}</span><span class="x">✕</span>`;
   return c;
 }
+
 function assign(name,tid){
   const g=data.guests.find(x=>x[0]===name);
-  if(g){g[3]=tid;render();}
+  if(g){g[3]=tid;render();touch();}
 }
-function addTo(tid){const nm=document.getElementById('gn_'+tid).value.trim();if(!nm)return;const ty=document.getElementById('gt_'+tid).value;data.guests.push([nm,'Guest',ty,tid]);document.getElementById('gn_'+tid).value='';render();}
-function addGuest(){const nm=prompt('Guest name:');if(!nm)return;const ty=prompt('Type (Couple/Single):','Single');data.guests.push([nm,'Guest',(ty||'Single'),'']);render();}
-function addTable(){const nm=prompt('Table name:');if(!nm)return;const cap=parseInt(prompt('Capacity (pax):','10')||'10',10);const id='T'+(data.tables.length+1);data.tables.push({id,name:nm,cap:cap});render();}
+function addTo(tid){
+  const nm=document.getElementById('gn_'+tid).value.trim();if(!nm)return;
+  const ty=document.getElementById('gt_'+tid).value;
+  data.guests.push([nm,'Guest',ty,tid]);
+  document.getElementById('gn_'+tid).value='';
+  render();touch();
+}
+function addGuest(){
+  const nm=prompt('Guest name:');if(!nm)return;
+  const ty=prompt('Type (Couple/Single):','Single');
+  data.guests.push([nm,'Guest',(ty||'Single'),'']);
+  render();touch();
+}
+function addTable(){
+  const nm=prompt('Table name:');if(!nm)return;
+  const cap=parseInt(prompt('Capacity (pax):','10')||'10',10);
+  const id='T'+(data.tables.length+1);
+  data.tables.push({id,name:nm,cap:cap});
+  render();touch();
+}
 function autoBalance(){
-  // clear assignments, fill by capacity order
   data.guests.forEach(g=>g[3]='');
   const order=[...data.tables].sort((a,b)=>b.cap-a.cap);
   let ti=0;
@@ -162,10 +247,85 @@ function autoBalance(){
     while(ti<order.length && tablePax(order[ti].id)+pax(g[2])>order[ti].cap) ti++;
     if(ti<order.length){g[3]=order[ti].id;}
   });
-  render();setStatus('Auto-balanced ✓');
+  render();touch();
+  setStatus('Auto-balanced · saving…');
 }
-function saveAll(){const txt=JSON.stringify(data,null,2);if(navigator.clipboard)navigator.clipboard.writeText(txt);prompt('Copy this JSON and send to the agent to update the shared plan:',txt);setStatus('Exported ✓');}
-function importJSON(){const t=prompt('Paste JSON to load:');if(!t)return;try{data=JSON.parse(t);setStatus('Imported ✓');render();}catch(e){setStatus('Invalid JSON');}}
+function saveAll(){
+  data.updatedAt=data.updatedAt||nowISO();
+  const txt=JSON.stringify(data,null,2);
+  if(navigator.clipboard)navigator.clipboard.writeText(txt).catch(()=>{});
+  prompt('Backup JSON (also already auto-saved on this device):',txt);
+  setStatus('Exported ✓ · last update '+fmtLocal(data.updatedAt));
+}
+function importJSON(){
+  const t=prompt('Paste JSON to load:');if(!t)return;
+  try{
+    data=JSON.parse(t);
+    if(!data.tables)data.tables=[];
+    if(!data.guests)data.guests=[];
+    data.updatedAt=nowISO();
+    writeLocal(data);
+    render();
+    setStatus('Imported ✓ · last update '+fmtLocal(data.updatedAt));
+  }catch(e){setStatus('Invalid JSON');}
+}
+function clearLocal(){
+  if(!confirm('Clear this device’s saved plan and reload the shared GitHub plan?'))return;
+  localStorage.removeItem(LS_PLAN);
+  load();
+}
+function forgetToken(){
+  localStorage.removeItem(LS_TOKEN);
+  setStatus('GitHub token cleared from this device');
+}
+function getToken(){
+  let tok=localStorage.getItem(LS_TOKEN)||'';
+  if(!tok){
+    tok=prompt('Paste a fine-grained GitHub PAT with Contents read/write on bensonlok/wedding-seating only. Stored only in this browser.');
+    if(!tok)return null;
+    tok=tok.trim();
+    localStorage.setItem(LS_TOKEN,tok);
+  }
+  return tok;
+}
+async function publishShared(){
+  const tok=getToken();
+  if(!tok){setStatus('Publish cancelled (no token)');return;}
+  data.updatedAt=nowISO();
+  writeLocal(data,true);
+  setStatus('Publishing to GitHub…');
+  try{
+    const get=await fetch(API_FILE+'?ref='+BRANCH,{headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+tok}});
+    if(get.status===401||get.status===403){
+      localStorage.removeItem(LS_TOKEN);
+      throw new Error('Token rejected — use Forget token then Publish again');
+    }
+    if(!get.ok)throw new Error('Read file HTTP '+get.status);
+    const meta=await get.json();
+    const body={
+      message:'seating: update plan '+data.updatedAt,
+      content:btoa(unescape(encodeURIComponent(JSON.stringify(data,null,2)+'\n'))),
+      sha:meta.sha,
+      branch:BRANCH
+    };
+    const put=await fetch(API_FILE,{
+      method:'PUT',
+      headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+tok,'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    if(put.status===401||put.status===403){
+      localStorage.removeItem(LS_TOKEN);
+      throw new Error('Token rejected on write');
+    }
+    if(!put.ok){
+      const err=await put.text();
+      throw new Error('Write HTTP '+put.status+' '+err.slice(0,120));
+    }
+    setStatus('Published shared ✓ · last update '+fmtLocal(data.updatedAt));
+  }catch(e){
+    setStatus('Publish failed: '+e.message);
+  }
+}
 function reload(){load();}
 load();
 </script>
