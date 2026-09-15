@@ -1,0 +1,299 @@
+{
+  "tables": [
+    {
+      "id": "T1",
+      "name": "Family (Benson+Mecki+Kids)",
+      "cap": 8,
+      "fam": true
+    },
+    {
+      "id": "T2",
+      "name": "Benson Side Couples",
+      "cap": 18
+    },
+    {
+      "id": "T3",
+      "name": "Benson Singles + Mum",
+      "cap": 6
+    },
+    {
+      "id": "T4",
+      "name": "Mecki Side Couples",
+      "cap": 8
+    },
+    {
+      "id": "T5",
+      "name": "Mecki Side Singles",
+      "cap": 8
+    },
+    {
+      "id": "T6",
+      "name": "Mecki Friends A",
+      "cap": 12
+    },
+    {
+      "id": "T7",
+      "name": "Mecki Friends B",
+      "cap": 12
+    },
+    {
+      "id": "T8",
+      "name": "Mecki Friends C",
+      "cap": 12
+    }
+  ],
+  "guests": [
+    [
+      "Loong",
+      "Benson",
+      "Couple",
+      "T2"
+    ],
+    [
+      "Sia",
+      "Benson",
+      "Couple",
+      "T2"
+    ],
+    [
+      "Tan",
+      "Benson",
+      "Couple",
+      "T2"
+    ],
+    [
+      "Sin",
+      "Benson",
+      "Couple",
+      "T2"
+    ],
+    [
+      "Eric",
+      "Benson",
+      "Couple",
+      "T2"
+    ],
+    [
+      "Hee",
+      "Benson",
+      "Couple",
+      "T2"
+    ],
+    [
+      "How",
+      "Benson",
+      "Couple",
+      "T2"
+    ],
+    [
+      "Amelin",
+      "Benson",
+      "Couple",
+      "T2"
+    ],
+    [
+      "How kids",
+      "Benson",
+      "Couple",
+      "T1"
+    ],
+    [
+      "Mum",
+      "Benson",
+      "Single",
+      "T3"
+    ],
+    [
+      "Eugene",
+      "Benson",
+      "Single",
+      "T3"
+    ],
+    [
+      "Kok eng",
+      "Benson",
+      "Single",
+      "T3"
+    ],
+    [
+      "Garry",
+      "Benson",
+      "Single",
+      "T3"
+    ],
+    [
+      "Marcus",
+      "Mecki",
+      "Couple",
+      "T4"
+    ],
+    [
+      "Eric",
+      "Mecki",
+      "Couple",
+      "T4"
+    ],
+    [
+      "uncle",
+      "Mecki",
+      "Couple",
+      "T4"
+    ],
+    [
+      "Kenny",
+      "Mecki",
+      "Couple",
+      "T4"
+    ],
+    [
+      "Auntie",
+      "Mecki",
+      "Single",
+      "T5"
+    ],
+    [
+      "Yvonne",
+      "Mecki",
+      "Single",
+      "T5"
+    ],
+    [
+      "Tristan",
+      "Mecki",
+      "Single",
+      "T5"
+    ],
+    [
+      "Nadia",
+      "Mecki",
+      "Single",
+      "T5"
+    ],
+    [
+      "David",
+      "Mecki",
+      "Single",
+      "T5"
+    ],
+    [
+      "Kit",
+      "Mecki",
+      "Single",
+      "T6"
+    ],
+    [
+      "Bee yen",
+      "Mecki",
+      "Single",
+      "T6"
+    ],
+    [
+      "Cindy",
+      "Mecki",
+      "Single",
+      "T6"
+    ],
+    [
+      "Saynie",
+      "Mecki",
+      "Single",
+      "T6"
+    ],
+    [
+      "Lily",
+      "Mecki",
+      "Single",
+      "T6"
+    ],
+    [
+      "Jan",
+      "Mecki",
+      "Single",
+      "T6"
+    ],
+    [
+      "Onlai",
+      "Mecki",
+      "Single",
+      "T7"
+    ],
+    [
+      "Even",
+      "Mecki",
+      "Single",
+      "T7"
+    ],
+    [
+      "Orange",
+      "Mecki",
+      "Single",
+      "T7"
+    ],
+    [
+      "Jillian",
+      "Mecki",
+      "Single",
+      "T7"
+    ],
+    [
+      "Joey",
+      "Mecki",
+      "Single",
+      "T7"
+    ],
+    [
+      "Sandra",
+      "Mecki",
+      "Single",
+      "T7"
+    ],
+    [
+      "Presley",
+      "Mecki",
+      "Single",
+      "T8"
+    ],
+    [
+      "Shirene",
+      "Mecki",
+      "Single",
+      "T8"
+    ],
+    [
+      "Candy",
+      "Mecki",
+      "Single",
+      "T8"
+    ],
+    [
+      "Candy sister",
+      "Mecki",
+      "Single",
+      "T8"
+    ],
+    [
+      "Singerou",
+      "Mecki",
+      "Single",
+      "T8"
+    ],
+    [
+      "Siewching",
+      "Mecki",
+      "Single",
+      "T8"
+    ],
+    [
+      "Yuet mei",
+      "Mecki",
+      "Single",
+      "T8"
+    ],
+    [
+      "Swat kheng",
+      "Mecki",
+      "Single",
+      "T8"
+    ]
+  ]
+}
