@@ -2,44 +2,34 @@
   "tables": [
     {
       "id": "T1",
-      "name": "Family (Benson+Mecki+Kids)",
-      "cap": 8,
-      "fam": true
+      "name": "Table 1",
+      "cap": 10
     },
     {
       "id": "T2",
-      "name": "Benson Side Couples",
-      "cap": 18
+      "name": "Table 2",
+      "cap": 10
     },
     {
       "id": "T3",
-      "name": "Benson Singles + Mum",
-      "cap": 6
+      "name": "Table 3",
+      "cap": 20
     },
     {
       "id": "T4",
-      "name": "Mecki Side Couples",
-      "cap": 8
+      "name": "Table 4",
+      "cap": 20
     },
     {
       "id": "T5",
-      "name": "Mecki Side Singles",
-      "cap": 8
+      "name": "Table 5",
+      "cap": 14
     },
     {
       "id": "T6",
-      "name": "Mecki Friends A",
-      "cap": 12
-    },
-    {
-      "id": "T7",
-      "name": "Mecki Friends B",
-      "cap": 12
-    },
-    {
-      "id": "T8",
-      "name": "Mecki Friends C",
-      "cap": 12
+      "name": "Family (Benson+Mecki+Kids)",
+      "cap": 8,
+      "fam": true
     }
   ],
   "guests": [
@@ -47,37 +37,37 @@
       "Loong",
       "Benson",
       "Couple",
-      "T2"
+      "T1"
     ],
     [
       "Sia",
       "Benson",
       "Couple",
-      "T2"
+      "T1"
     ],
     [
       "Tan",
       "Benson",
       "Couple",
-      "T2"
+      "T1"
     ],
     [
       "Sin",
       "Benson",
       "Couple",
-      "T2"
+      "T1"
     ],
     [
       "Eric",
       "Benson",
       "Couple",
-      "T2"
+      "T1"
     ],
     [
       "Hee",
       "Benson",
       "Couple",
-      "T2"
+      "T1"
     ],
     [
       "How",
@@ -95,55 +85,55 @@
       "How kids",
       "Benson",
       "Couple",
-      "T1"
+      "T6"
     ],
     [
       "Mum",
       "Benson",
       "Single",
-      "T3"
+      "T2"
     ],
     [
       "Eugene",
       "Benson",
       "Single",
-      "T3"
+      "T2"
     ],
     [
       "Kok eng",
       "Benson",
       "Single",
-      "T3"
+      "T2"
     ],
     [
       "Garry",
       "Benson",
       "Single",
-      "T3"
+      "T2"
     ],
     [
       "Marcus",
       "Mecki",
       "Couple",
-      "T4"
+      "T3"
     ],
     [
       "Eric",
       "Mecki",
       "Couple",
-      "T4"
+      "T3"
     ],
     [
       "uncle",
       "Mecki",
       "Couple",
-      "T4"
+      "T3"
     ],
     [
       "Kenny",
       "Mecki",
       "Couple",
-      "T4"
+      "T3"
     ],
     [
       "Auntie",
@@ -179,121 +169,121 @@
       "Kit",
       "Mecki",
       "Single",
-      "T6"
+      "T4"
     ],
     [
       "Bee yen",
       "Mecki",
       "Single",
-      "T6"
+      "T4"
     ],
     [
       "Cindy",
       "Mecki",
       "Single",
-      "T6"
+      "T4"
     ],
     [
       "Saynie",
       "Mecki",
       "Single",
-      "T6"
+      "T4"
     ],
     [
       "Lily",
       "Mecki",
       "Single",
-      "T6"
+      "T4"
     ],
     [
       "Jan",
       "Mecki",
       "Single",
-      "T6"
+      "T4"
     ],
     [
       "Onlai",
       "Mecki",
       "Single",
-      "T7"
+      "T4"
     ],
     [
       "Even",
       "Mecki",
       "Single",
-      "T7"
+      "T4"
     ],
     [
       "Orange",
       "Mecki",
       "Single",
-      "T7"
+      "T4"
     ],
     [
       "Jillian",
       "Mecki",
       "Single",
-      "T7"
+      "T4"
     ],
     [
       "Joey",
       "Mecki",
       "Single",
-      "T7"
+      "T4"
     ],
     [
       "Sandra",
       "Mecki",
       "Single",
-      "T7"
+      "T4"
     ],
     [
       "Presley",
       "Mecki",
       "Single",
-      "T8"
+      "T3"
     ],
     [
       "Shirene",
       "Mecki",
       "Single",
-      "T8"
+      "T3"
     ],
     [
       "Candy",
       "Mecki",
       "Single",
-      "T8"
+      "T3"
     ],
     [
       "Candy sister",
       "Mecki",
       "Single",
-      "T8"
+      "T3"
     ],
     [
       "Singerou",
       "Mecki",
       "Single",
-      "T8"
+      "T3"
     ],
     [
       "Siewching",
       "Mecki",
       "Single",
-      "T8"
+      "T3"
     ],
     [
       "Yuet mei",
       "Mecki",
       "Single",
-      "T8"
+      "T3"
     ],
     [
       "Swat kheng",
       "Mecki",
       "Single",
-      "T8"
+      "T3"
     ]
   ]
 }
