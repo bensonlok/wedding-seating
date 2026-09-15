@@ -52,7 +52,6 @@
   <button onclick="addGuest()">+ Guest</button>
   <button onclick="reload()">↻ Refresh</button>
   <button class="sm" onclick="autoBalance()">Auto-balance</button>
-  <button class="sm" onclick="resetToCloud()">Reset to cloud</button>
 </div>
 
 <div class="totals" id="totals"></div>
@@ -100,7 +99,6 @@ let data=JSON.parse(JSON.stringify(DEF));
 let sel=null; // selected guest name for tap-to-move
 
 async function load(){
-  if(loadLocal()){setStatus('Loaded from this device ✓ (tap Refresh for cloud)');render();return;}
   setStatus('Loading shared plan…');
   try{
     const r=await fetch(RAW_URL+'?t='+Date.now());
@@ -111,25 +109,6 @@ async function load(){
   }catch(e){setStatus('Load failed (using default): '+e.message);data=JSON.parse(JSON.stringify(DEF));render();}
 }
 function setStatus(s){document.getElementById('status').textContent=s;}
-const LS_KEY="wedding_plan_local_v2";
-function persist(){
-  try{
-    localStorage.setItem(LS_KEY,JSON.stringify({data,ts:Date.now()}));
-    const d=new Date();
-    setStatus('Saved on this device ✓ '+d.toLocaleTimeString());
-  }catch(e){setStatus('Save failed: '+e.message);}
-}
-function loadLocal(){
-  try{
-    const raw=localStorage.getItem(LS_KEY);
-    if(raw){const o=JSON.parse(raw);data=o.data;return true;}
-  }catch(e){}
-  return false;
-}
-function resetToCloud(){
-  localStorage.removeItem(LS_KEY);
-  load();
-}
 function tablePax(tid){return data.guests.filter(g=>g[3]===tid).reduce((s,g)=>s+pax(g[2]),0);}
 
 function render(){
@@ -163,17 +142,17 @@ function chip(g,tid){
   const c=document.createElement('span');c.className='chip'+(sel===g[0]?' sel':'');
   c.draggable=true;
   c.ondragstart=(e)=>e.dataTransfer.setData('text',g[0]);
-  c.onclick=(e)=>{e.stopPropagation();if(e.target.classList.contains('x')){assign(g[0],'');persist();return;}sel=(sel===g[0]?null:g[0]);render();};
+  c.onclick=(e)=>{e.stopPropagation();if(e.target.classList.contains('x')){assign(g[0],'');return;}sel=(sel===g[0]?null:g[0]);render();};
   c.innerHTML=`${g[0]}<span class="t">${g[1][0]}·${g[2][0]}</span><span class="x">✕</span>`;
   return c;
 }
 function assign(name,tid){
   const g=data.guests.find(x=>x[0]===name);
-  if(g){g[3]=tid;render();persist();}
+  if(g){g[3]=tid;render();}
 }
-function addTo(tid){const nm=document.getElementById('gn_'+tid).value.trim();if(!nm)return;const ty=document.getElementById('gt_'+tid).value;data.guests.push([nm,'Guest',ty,tid]);document.getElementById('gn_'+tid).value='';render();persist();}
-function addGuest(){const nm=prompt('Guest name:');if(!nm)return;const ty=prompt('Type (Couple/Single):','Single');data.guests.push([nm,'Guest',(ty||'Single'),'']);render();persist();}
-function addTable(){const nm=prompt('Table name:');if(!nm)return;const cap=parseInt(prompt('Capacity (pax):','10')||'10',10);const id='T'+(data.tables.length+1);data.tables.push({id,name:nm,cap:cap});render();persist();}
+function addTo(tid){const nm=document.getElementById('gn_'+tid).value.trim();if(!nm)return;const ty=document.getElementById('gt_'+tid).value;data.guests.push([nm,'Guest',ty,tid]);document.getElementById('gn_'+tid).value='';render();}
+function addGuest(){const nm=prompt('Guest name:');if(!nm)return;const ty=prompt('Type (Couple/Single):','Single');data.guests.push([nm,'Guest',(ty||'Single'),'']);render();}
+function addTable(){const nm=prompt('Table name:');if(!nm)return;const cap=parseInt(prompt('Capacity (pax):','10')||'10',10);const id='T'+(data.tables.length+1);data.tables.push({id,name:nm,cap:cap});render();}
 function autoBalance(){
   // clear assignments, fill by capacity order
   data.guests.forEach(g=>g[3]='');
@@ -183,10 +162,10 @@ function autoBalance(){
     while(ti<order.length && tablePax(order[ti].id)+pax(g[2])>order[ti].cap) ti++;
     if(ti<order.length){g[3]=order[ti].id;}
   });
-  render();persist();setStatus('Auto-balanced ✓');
+  render();setStatus('Auto-balanced ✓');
 }
 function saveAll(){const txt=JSON.stringify(data,null,2);if(navigator.clipboard)navigator.clipboard.writeText(txt);prompt('Copy this JSON and send to the agent to update the shared plan:',txt);setStatus('Exported ✓');}
-function importJSON(){const t=prompt('Paste JSON to load:');if(!t)return;try{data=JSON.parse(t);persist();setStatus('Imported ✓');render();}catch(e){setStatus('Invalid JSON');}}
+function importJSON(){const t=prompt('Paste JSON to load:');if(!t)return;try{data=JSON.parse(t);setStatus('Imported ✓');render();}catch(e){setStatus('Invalid JSON');}}
 function reload(){load();}
 load();
 </script>
