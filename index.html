@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Wedding Seating Planner (Cloud)</title>
+<style>
+  :root{--bg:#0f172a;--card:#1e293b;--acc:#38bdf8;--ok:#22c55e;--fam:#fbbf24;--txt:#e2e8f0;--mut:#94a3b8}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--txt);padding:12px;max-width:900px;margin:auto}
+  h1{font-size:20px;margin:6px 0 2px}
+  .sub{color:var(--mut);font-size:13px;margin-bottom:8px}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  button{background:var(--card);color:var(--txt);border:1px solid #334155;border-radius:10px;padding:9px 13px;font-size:14px;cursor:pointer}
+  button.acc{background:var(--acc);color:#06283d;border:none;font-weight:600}
+  button.sm{padding:5px 9px;font-size:12px}
+  .totals{background:var(--card);border-radius:12px;padding:12px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:14px;font-size:14px}
+  .totals b{color:var(--acc)}
+  .status{font-size:12px;color:var(--mut);margin-bottom:10px}
+  .tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  .tbl{background:var(--card);border-radius:12px;padding:11px;border:1px solid #334155}
+  .tbl.fam{border-color:var(--fam);box-shadow:0 0 0 1px var(--fam) inset}
+  .tbl h3{margin:0 0 6px;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+  .tbl .cap{font-size:12px;color:var(--mut)}
+  .pax{font-size:13px;color:var(--ok);font-weight:600}
+  .g{display:flex;align-items:center;justify-content:space-between;background:#0b1220;border-radius:8px;padding:6px 8px;margin:5px 0;font-size:13px}
+  .g .nm{flex:1}
+  .g .meta{color:var(--mut);font-size:11px;margin-left:6px}
+  .g select{background:#1e293b;color:var(--txt);border:1px solid #334155;border-radius:6px;padding:3px;font-size:12px;max-width:90px}
+  .addrow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .addrow input,.addrow select{background:#0b1220;color:var(--txt);border:1px solid #334155;border-radius:7px;padding:7px;font-size:13px}
+  .addrow input.nm{flex:1;min-width:110px}
+  .sec{margin:16px 0 8px;font-size:15px;color:var(--acc);font-weight:600}
+  .del{color:#f87171;background:none;border:none;font-size:14px;padding:0 4px}
+  .hint{color:var(--mut);font-size:12px;margin-top:16px;line-height:1.5}
+</style>
+</head>
+<body>
+<h1>💍 Wedding Seating Planner</h1>
+<div class="sub">Benson + Mecki · cloud-synced · edits save to GitHub</div>
+<div class="status" id="status">Loading…</div>
+
+<div class="bar">
+  <button class="acc" onclick="saveAll()">📤 Export</button>
+  <button onclick="importJSON()">📥 Import</button>
+  <button onclick="addTable()">+ Table</button>
+  <button onclick="addGuest()">+ Guest</button>
+  <button onclick="reload()">↻ Refresh</button>
+</div>
+
+<div class="totals" id="totals"></div>
+<div class="sec">Tables</div>
+<div class="tables" id="tables"></div>
+<div class="sec">Unassigned</div>
+<div id="unassigned"></div>
+
+<div class="hint">
+Open this same URL on phone and PC — both read the shared plan from GitHub.<br>
+<b>Export</b> copies your edited JSON; send it to the agent (or paste via <b>Import</b>) to update the shared plan.<br>
+For true live two-way sync, ask the agent to connect a scoped Firebase backend (no GitHub token in the page).<br>
+Couple = 2 pax · Single = 1 pax · Family table fixed 8 pax.
+</div>
+
+<script>
+const REPO="bensonlok/wedding-seating";
+const BRANCH="main";
+const PATH="data.json";
+// No token in client. App reads shared data.json from GitHub (public repo).
+// To edit cross-device, use Export (copy JSON) / Import, or connect a scoped backend (Firebase).
+const RAW_URL=`https://raw.githubusercontent.com/${REPO}/${BRANCH}/${PATH}`;
+
+const DEF={tables:[
+  {id:'T1',name:'Family (Benson+Mecki+Kids)',cap:8,fam:true},
+  {id:'T2',name:'Benson Side Couples',cap:18},
+  {id:'T3',name:'Benson Singles + Mum',cap:6},
+  {id:'T4',name:'Mecki Side Couples',cap:8},
+  {id:'T5',name:'Mecki Side Singles',cap:8},
+  {id:'T6',name:'Mecki Friends A',cap:12},
+  {id:'T7',name:'Mecki Friends B',cap:12},
+  {id:'T8',name:'Mecki Friends C',cap:12}
+],guests:[
+  ['Loong','Benson','Couple','T2'],['Sia','Benson','Couple','T2'],['Tan','Benson','Couple','T2'],
+  ['Sin','Benson','Couple','T2'],['Eric','Benson','Couple','T2'],['Hee','Benson','Couple','T2'],
+  ['How','Benson','Couple','T2'],['Amelin','Benson','Couple','T2'],['How kids','Benson','Couple','T1'],
+  ['Mum','Benson','Single','T3'],['Eugene','Benson','Single','T3'],['Kok eng','Benson','Single','T3'],['Garry','Benson','Single','T3'],
+  ['Marcus','Mecki','Couple','T4'],['Eric','Mecki','Couple','T4'],['uncle','Mecki','Couple','T4'],['Kenny','Mecki','Couple','T4'],
+  ['Auntie','Mecki','Single','T5'],['Yvonne','Mecki','Single','T5'],['Tristan','Mecki','Single','T5'],['Nadia','Mecki','Single','T5'],['David','Mecki','Single','T5'],
+  ['Kit','Mecki','Single','T6'],['Bee yen','Mecki','Single','T6'],['Cindy','Mecki','Single','T6'],['Saynie','Mecki','Single','T6'],['Lily','Mecki','Single','T6'],['Jan','Mecki','Single','T6'],
+  ['Onlai','Mecki','Single','T7'],['Even','Mecki','Single','T7'],['Orange','Mecki','Single','T7'],['Jillian','Mecki','Single','T7'],['Joey','Mecki','Single','T7'],['Sandra','Mecki','Single','T7'],
+  ['Presley','Mecki','Single','T8'],['Shirene','Mecki','Single','T8'],['Candy','Mecki','Single','T8'],['Candy sister','Mecki','Single','T8'],['Singerou','Mecki','Single','T8'],['Siewching','Mecki','Single','T8'],['Yuet mei','Mecki','Single','T8'],['Swat kheng','Mecki','Single','T8']
+]};
+function pax(t){return t==='Couple'?2:1;}
+let data=JSON.parse(JSON.stringify(DEF));
+
+async function load(){
+  setStatus('Loading shared plan…');
+  try{
+    const r=await fetch(RAW_URL+'?t='+Date.now());
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    data=await r.json();
+    setStatus('Loaded shared plan ✓');
+    render();
+  }catch(e){setStatus('Load failed (using default): '+e.message);data=JSON.parse(JSON.stringify(DEF));render();}
+}
+// Save = export JSON to clipboard/file; you paste it back via Import (no token in client).
+// For true live sync, connect a scoped backend (Firebase) — ask the agent.
+function saveAll(){
+  const txt=JSON.stringify(data,null,2);
+  if(navigator.clipboard) navigator.clipboard.writeText(txt);
+  prompt('Copy this JSON and send to the agent (or save to update the shared plan):',txt);
+  setStatus('Exported ✓');
+}
+function importJSON(){
+  const t=prompt('Paste JSON to load:');
+  if(!t)return;
+  try{data=JSON.parse(t);setStatus('Imported ✓');render();}
+  catch(e){setStatus('Invalid JSON');}
+}
+function setStatus(s){document.getElementById('status').textContent=s;}
+function render(){
+  let tot=0,side={Benson:0,Mecki:0};
+  data.guests.forEach(g=>{tot+=pax(g[2]);side[g[1]]=(side[g[1]]||0)+pax(g[2]);});
+  document.getElementById('totals').innerHTML=`<div>Total pax: <b>${tot}</b></div><div>Benson: <b>${side.Benson||0}</b></div><div>Mecki: <b>${side.Mecki||0}</b></div><div>Tables: <b>${data.tables.length}</b></div>`;
+  const wrap=document.getElementById('tables');wrap.innerHTML='';
+  data.tables.forEach(t=>{
+    const gs=data.guests.filter(g=>g[3]===t.id);
+    let pp=gs.reduce((s,g)=>s+pax(g[2]),0);
+    const div=document.createElement('div');div.className='tbl'+(t.fam?' fam':'');
+    let html=`<h3><span>${t.id} · ${t.name}</span><span class="pax">${pp}/${t.cap}</span></h3><div class="cap">capacity ${t.cap}</div>`;
+    gs.forEach(g=>{html+=`<div class="g"><span class="nm">${g[0]}<span class="meta">${g[1]}·${g[2]}</span></span><select onchange="move('${g[0]}',this.value)">${tableOpts(g[3])}</select><button class="del" onclick="delG('${g[0]}')">✕</button></div>`;});
+    html+=`<div class="addrow"><input class="nm" id="gn_${t.id}" placeholder="add guest"><select id="gt_${t.id}"><option>Couple</option><option>Single</option></select><button class="sm" onclick="addTo('${t.id}')">+</button></div>`;
+    div.innerHTML=html;wrap.appendChild(div);
+  });
+  const ua=data.guests.filter(g=>!g[3]||!data.tables.find(t=>t.id===g[3]));
+  const u=document.getElementById('unassigned');u.innerHTML='';
+  if(!ua.length){u.innerHTML='<div class="cap">none</div>';}
+  ua.forEach(g=>{const d=document.createElement('div');d.className='g';d.innerHTML=`<span class="nm">${g[0]}<span class="meta">${g[1]}·${g[2]}</span></span><select onchange="move('${g[0]}',this.value)">${tableOpts(g[3]||'')}</select><button class="del" onclick="delG('${g[0]}')">✕</button>`;u.appendChild(d);});
+}
+function tableOpts(sel){let o='<option value="">— unassigned —</option>';data.tables.forEach(t=>{o+=`<option ${t.id===sel?'selected':''}>${t.id}</option>`;});return o;}
+function move(name,tbl){const g=data.guests.find(x=>x[0]===name);if(g){g[3]=tbl;render();}}
+function delG(name){data.guests=data.guests.filter(x=>x[0]!==name);render();}
+function addTo(tid){const nm=document.getElementById('gn_'+tid).value.trim();if(!nm)return;const ty=document.getElementById('gt_'+tid).value;data.guests.push([nm,'Guest',ty,tid]);document.getElementById('gn_'+tid).value='';render();}
+function addGuest(){const nm=prompt('Guest name:');if(!nm)return;const ty=prompt('Type (Couple/Single):','Single');data.guests.push([nm,'Guest',(ty||'Single'),'']);render();}
+function addTable(){const nm=prompt('Table name:');if(!nm)return;const cap=parseInt(prompt('Capacity (pax):','8')||'8',10);const id='T'+(data.tables.length+1);data.tables.push({id,name:nm,cap:cap});render();}
+function reload(){load();}
+load();
+</script>
+</body>
+</html>
