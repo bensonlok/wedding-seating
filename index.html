@@ -31,7 +31,7 @@
   .cap{font-size:11px;color:var(--mut);margin-bottom:6px}
   .chip{display:inline-flex;align-items:center;gap:4px;background:#0b1220;border:1px solid #334155;border-radius:20px;padding:5px 10px;font-size:13px;cursor:grab;user-select:none;touch-action:manipulation}
   .chip.sel{outline:2px solid var(--acc);background:#1e3a52}
-  .chip .x{color:#f87171;margin-left:2px;cursor:pointer}
+  .chip .x{color:#f87171;margin-left:4px;padding:2px 6px;cursor:pointer;font-weight:700;line-height:1;border-radius:6px}.chip .x:active{background:#7f1d1d;color:#fecaca}
   .chip .t{color:var(--mut);font-size:10px}
   .gdrop{margin:5px 0}
   .addrow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
@@ -60,7 +60,7 @@
 <div class="totals" id="totals"></div>
 
 <div class="pool" id="pool">
-  <h3>Unassigned (drag / tap to seat)</h3>
+  <h3>Unassigned (drag / tap to seat · ✕ deletes)</h3>
   <div class="chips" id="poolChips"></div>
 </div>
 
@@ -70,7 +70,7 @@
 <div class="hint">
 <b>Saving:</b> Every change auto-saves on this phone/PC. Refresh keeps your last update. Use <b>Publish shared</b> (one-time GitHub token) to sync phone ↔ laptop via <code>data.json</code>. Export/Import for backup.<br>
 <b>Your tables:</b> T1·T2 = 10 pax each · T3·T4 = 20 pax each · T5 = 14 pax · T6 (family) = 8 pax (Benson+Mecki+kids).<br>
-<b>Desktop:</b> drag a chip onto a table. <b>Phone:</b> tap a guest chip (turns blue), then tap the table to drop. Tap ✕ to unassign.<br>
+<b>Desktop:</b> drag a chip onto a table. <b>Phone:</b> tap a guest chip (turns blue), then tap the table to drop. Tap ✕ on a <b>table</b> chip to unassign. Tap ✕ in <b>Unassigned</b> to delete the guest from the list.<br>
 Couple = 2 pax · Single = 1 pax. Family table fixed 8.
 </div>
 
@@ -210,9 +210,30 @@ function chip(g,tid){
   const c=document.createElement('span');c.className='chip'+(sel===g[0]?' sel':'');
   c.draggable=true;
   c.ondragstart=(e)=>e.dataTransfer.setData('text',g[0]);
-  c.onclick=(e)=>{e.stopPropagation();if(e.target.classList.contains('x')){assign(g[0],'');return;}sel=(sel===g[0]?null:g[0]);render();};
-  c.innerHTML=`${g[0]}<span class="t">${g[1][0]}·${g[2][0]}</span><span class="x">✕</span>`;
+  c.onclick=(e)=>{
+    e.stopPropagation();
+    if(e.target.classList.contains('x')){
+      // Unassigned pool: delete guest from list. Seated at a table: unassign only.
+      if(!tid){ removeGuest(g[0]); }
+      else { assign(g[0],''); }
+      return;
+    }
+    sel=(sel===g[0]?null:g[0]);
+    render();
+  };
+  const xTitle = tid ? 'Unassign from table' : 'Delete guest';
+  c.innerHTML=`${g[0]}<span class="t">${g[1][0]}·${g[2][0]}</span><span class="x" title="${xTitle}">✕</span>`;
   return c;
+}
+function removeGuest(name){
+  const g=data.guests.find(x=>x[0]===name);
+  if(!g)return;
+  if(!confirm('Delete guest "'+name+'" from the list? This cannot be undone on this device until you reload a backup.'))return;
+  data.guests=data.guests.filter(x=>x[0]!==name);
+  if(sel===name)sel=null;
+  render();
+  touch();
+  setStatus('Deleted '+name+' · saving…');
 }
 
 function assign(name,tid){
